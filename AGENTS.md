@@ -126,6 +126,7 @@ npm run build --prefix frontend
 uv run python -m tools.scan_public
 uv run python -m tools.scan_public --history
 npm audit --prefix frontend --audit-level=high
+requirements_file="$(mktemp)" && trap 'rm -f "$requirements_file"' EXIT && uv export --locked --no-hashes --format requirements-txt --output-file "$requirements_file" && uv run pip-audit --strict --requirement "$requirements_file"
 uv run uv pip check
 git diff --check
 git status --short --untracked-files=all

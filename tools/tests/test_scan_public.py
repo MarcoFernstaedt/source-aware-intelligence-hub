@@ -117,3 +117,55 @@ def test_history_scanner_checks_commit_messages(tmp_path: Path) -> None:
 
     assert any(finding.detector == "absolute-path" for finding in findings)
     assert all(private_path not in finding.summary for finding in findings)
+
+
+def test_history_scanner_accepts_github_owned_bot_emails(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
+    candidate = tmp_path / "README.md"
+    candidate.write_text("clean", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=tmp_path, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=GitHub",
+            "-c",
+            "user.email=noreply" + "@" + "github.com",
+            "commit",
+            "-m",
+            "dependency update\n\nSigned-off-by: dependabot[bot] <support" + "@" + "github.com>",
+        ],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    assert history_findings(tmp_path) == []
+
+
+def test_history_scanner_rejects_addresses_containing_github_owned_suffix(
+    tmp_path: Path,
+) -> None:
+    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
+    candidate = tmp_path / "README.md"
+    candidate.write_text("clean", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=tmp_path, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Fixture Builder",
+            "-c",
+            "user.email=1+fixture" + "@" + "users.noreply.github.com",
+            "commit",
+            "-m",
+            "dependency update\n\nSigned-off-by: Example <attacker-noreply" + "@" + "github.com>",
+        ],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    findings = history_findings(tmp_path)
+
+    assert any(finding.detector == "email" for finding in findings)

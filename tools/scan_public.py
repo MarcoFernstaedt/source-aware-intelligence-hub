@@ -42,6 +42,7 @@ _PATTERNS = {
     ),
     "private-key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 }
+_PUBLIC_GITHUB_EMAILS = {"noreply" + "@" + "github.com", "support" + "@" + "github.com"}
 
 
 @dataclass(frozen=True)
@@ -62,9 +63,18 @@ def _is_sensitive_filename(path: Path) -> bool:
 
 def _is_public_commit_email(value: str) -> bool:
     normalized = value.strip().lower()
-    return normalized.endswith("@users.noreply.github.com") or normalized.endswith(
-        "@noreply.github.com"
+    return (
+        normalized in _PUBLIC_GITHUB_EMAILS
+        or normalized.endswith("@users.noreply.github.com")
+        or normalized.endswith("@noreply.github.com")
     )
+
+
+def _scan_commit_message(text: str, label: str) -> list[Finding]:
+    def remove_public_email(match: re.Match[str]) -> str:
+        return "" if match.group(0).lower() in _PUBLIC_GITHUB_EMAILS else match.group(0)
+
+    return _scan_text(_PATTERNS["email"].sub(remove_public_email, text), label)
 
 
 def _scan_text(text: str, label: str) -> list[Finding]:
@@ -135,7 +145,7 @@ def history_findings(root: Path) -> list[Finding]:
             text=True,
             capture_output=True,
         ).stdout
-        findings.extend(_scan_text(message, f"{commit[:12]}:commit-message"))
+        findings.extend(_scan_commit_message(message, f"{commit[:12]}:commit-message"))
         entries = subprocess.run(
             ["git", "ls-tree", "-r", commit],
             cwd=root,

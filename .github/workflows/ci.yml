@@ -57,5 +57,8 @@ jobs:
         run: uv run python -m tools.scan_public --history
       - name: JavaScript dependency audit
         run: npm audit --prefix frontend --audit-level=high
+      - name: Python dependency advisory audit
+        shell: bash
+        run: requirements_file="$(mktemp)" && trap 'rm -f "$requirements_file"' EXIT && uv export --locked --no-hashes --format requirements-txt --output-file "$requirements_file" && uv run pip-audit --strict --requirement "$requirements_file"
       - name: Python dependency consistency
         run: uv run uv pip check

@@ -4,8 +4,9 @@ version = "1.0.0"
 description = "Synthetic source-aware decision support demo"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi==0.116.1",
+  "fastapi==0.141.1",
   "pydantic==2.11.7",
+  "starlette==1.6.0",
   "uvicorn==0.35.0",
 ]
 
@@ -13,7 +14,8 @@ dependencies = [
 dev = [
   "httpx==0.28.1",
   "mypy==1.17.1",
-  "pytest==8.4.1",
+  "pip-audit==2.10.1",
+  "pytest==9.0.3",
   "ruff==0.12.10",
 ]
 
