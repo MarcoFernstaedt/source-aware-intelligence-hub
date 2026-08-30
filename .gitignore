@@ -1,0 +1,39 @@
+# Dependencies and build output
+.venv/
+frontend/node_modules/
+frontend/dist/
+*.egg-info/
+
+# Python caches and reports
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# JavaScript caches and reports
+frontend/coverage/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# Local configuration, state, and credentials
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.pid
+
+# Temporary/editor/OS files
+.tmp/
+tmp/
+.cache/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

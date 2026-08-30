@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+      - name: Python format
+        run: uv run ruff format --check backend tools
+      - name: Python lint
+        run: uv run ruff check backend tools
+      - name: Python types
+        run: uv run mypy
+      - name: Python tests
+        run: uv run pytest
+      - name: Frontend format
+        run: npm run format:check --prefix frontend
+      - name: Frontend lint
+        run: npm run lint --prefix frontend
+      - name: Frontend types
+        run: npm run typecheck --prefix frontend
+      - name: Frontend tests
+        run: npm run test:run --prefix frontend
+      - name: Production build
+        run: npm run build --prefix frontend
+      - name: Current-tree public boundary
+        run: uv run python -m tools.scan_public
+      - name: Reachable-history public boundary
+        run: uv run python -m tools.scan_public --history
+      - name: JavaScript dependency audit
+        run: npm audit --prefix frontend --audit-level=high
+      - name: Python dependency consistency
+        run: uv run uv pip check
